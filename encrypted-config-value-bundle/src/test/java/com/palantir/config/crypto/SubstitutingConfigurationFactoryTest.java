@@ -27,6 +27,8 @@ import io.dropwizard.jackson.Jackson;
 import io.dropwizard.jersey.validation.Validators;
 import java.io.File;
 import java.io.IOException;
+import java.util.regex.Matcher;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -75,7 +77,9 @@ public class SubstitutingConfigurationFactoryTest {
             factory.build(new File("src/test/resources/testConfigWithError.yml"));
             failBecauseExceptionWasNotThrown(ConfigurationDecryptionException.class);
         } catch (ConfigurationDecryptionException e) {
-            assertThat(e.getMessage()).contains("src/test/resources/testConfigWithError.yml has the following errors");
+            assertThat(e.getMessage())
+                    .contains("src/test/resources/testConfigWithError.yml has the following errors"
+                                      .replaceAll("/", Matcher.quoteReplacement(File.separator)));
             assertThat(e.getMessage()).contains(
                     "The value 'enc:ERROR' for field 'arrayWithSomeEncryptedValues[3]' could not be replaced "
                     + "with its unencrypted value");

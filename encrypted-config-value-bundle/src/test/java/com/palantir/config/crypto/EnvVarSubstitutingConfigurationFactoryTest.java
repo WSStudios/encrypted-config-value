@@ -19,6 +19,7 @@ package com.palantir.config.crypto;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 
+import com.google.common.collect.Maps;
 import com.palantir.config.crypto.jackson.JsonNodeStringReplacer;
 import com.palantir.config.crypto.util.Person;
 import com.palantir.config.crypto.util.TestConfig;
@@ -27,20 +28,55 @@ import io.dropwizard.jackson.Jackson;
 import io.dropwizard.jersey.validation.Validators;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class SubstitutingConfigurationFactoryTest {
-    private static String previousProperty;
+public class EnvVarSubstitutingConfigurationFactoryTest {
     private static SubstitutingConfigurationFactory<TestConfig> factory;
+    private static Map<String, String> previousEnv;
+
+    // https://stackoverflow.com/questions/318239/how-do-i-set-environment-variables-from-java
+    @SuppressWarnings("unchecked")
+    protected static void updateEnv(Map<String, String> newenv) throws Exception {
+        try {
+            Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
+            Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
+            theEnvironmentField.setAccessible(true);
+            Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
+            env.putAll(newenv);
+            Field theCaseInsensitiveEnvironmentField = processEnvironmentClass
+                    .getDeclaredField("theCaseInsensitiveEnvironment");
+            theCaseInsensitiveEnvironmentField.setAccessible(true);
+            Map<String, String> cienv = (Map<String, String>)     theCaseInsensitiveEnvironmentField.get(null);
+            cienv.putAll(newenv);
+        } catch (NoSuchFieldException e) {
+            Class[] classes = Collections.class.getDeclaredClasses();
+            Map<String, String> env = System.getenv();
+            for (Class cl : classes) {
+                if ("java.util.Collections$UnmodifiableMap".equals(cl.getName())) {
+                    Field field = cl.getDeclaredField("m");
+                    field.setAccessible(true);
+                    Object obj = field.get(env);
+                    Map<String, String> map = (Map<String, String>) obj;
+                    map.clear();
+                    map.putAll(newenv);
+                }
+            }
+        }
+    }
 
     @BeforeClass
-    public static void beforeClass() throws IOException {
-        previousProperty = System.getProperty(KeyFileUtils.KEY_PATH_PROPERTY);
-        System.setProperty(KeyFileUtils.KEY_PATH_PROPERTY, "src/test/resources/test.key");
+    public static void before() throws Exception {
+        previousEnv = System.getenv();
+        Map<String, String> env = Maps.newHashMap(previousEnv);
+        env.put(KeyEnvVarUtils.KEY_VALUE_PROPERTY, "AES:vgwWG0UUo39Hhfru2dD7Nw==");
+        EnvVarSubstitutingConfigurationFactoryTest.updateEnv(env);
 
         factory = new SubstitutingConfigurationFactory(
                 TestConfig.class,
@@ -51,9 +87,9 @@ public class SubstitutingConfigurationFactoryTest {
     }
 
     @AfterClass
-    public static void afterClass() {
-        if (previousProperty != null) {
-            System.setProperty(KeyFileUtils.KEY_PATH_PROPERTY, previousProperty);
+    public static void after() throws Exception {
+        if (previousEnv != null) {
+            EnvVarSubstitutingConfigurationFactoryTest.updateEnv(previousEnv);
         }
     }
 
@@ -78,10 +114,13 @@ public class SubstitutingConfigurationFactoryTest {
             failBecauseExceptionWasNotThrown(ConfigurationDecryptionException.class);
         } catch (ConfigurationDecryptionException e) {
             assertThat(e.getMessage())
-                    .contains("src/test/resources/testConfigWithError.yml has an error"
+                    .contains("src/test/resources/testConfigWithError.yml has the following errors"
                                       .replaceAll("/", Matcher.quoteReplacement(File.separator)));
             assertThat(e.getMessage()).contains(
-                    "The value 'enc:ERROR' for field 'arrayWithSomeEncryptedValues[3]' could not be replaced");
+                    "The value 'enc:ERROR' for field 'arrayWithSomeEncryptedValues[3]' could not be replaced "
+                    + "with its unencrypted value");
+            assertThat(e.getMessage()).contains(
+                    "Underlying error - ");
         }
     }
 }
