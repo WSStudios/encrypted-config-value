@@ -34,7 +34,7 @@ public final class KeyEnvVarUtils {
         }
         KeyWithType encryptionKeyWithType = KeyWithType.fromString(encryptionKey);
 
-        String decryptionKey = System.getenv(KEY_VALUE_PROPERTY);
+        String decryptionKey = System.getenv(KEY_VALUE_PROPERTY + ".private");
         if (Strings.isNullOrEmpty(decryptionKey)) {
             keyPair = KeyPair.symmetric(encryptionKeyWithType);
         } else {
