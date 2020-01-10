@@ -37,6 +37,7 @@ public final class EncryptedConfigValueBundle implements Bundle {
     public void initialize(Bootstrap<?> bootstrap) {
         bootstrap.addCommand(new GenerateKeyCommand());
         bootstrap.addCommand(new EncryptConfigValueCommand());
+        bootstrap.addCommand(new EncryptConfigValueCommand("encrypt"));
         setConfigurationFactoryFactory(bootstrap, new JsonNodeStringReplacer(new DecryptingVariableSubstitutor()));
     }
 

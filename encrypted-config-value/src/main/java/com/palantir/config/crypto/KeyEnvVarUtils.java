@@ -27,7 +27,6 @@ public final class KeyEnvVarUtils {
     }
 
     public static KeyPair retrieveKeyPairFromEnvVar() {
-        KeyPair keyPair;
         String encryptionKey = System.getenv(KEY_VALUE_PROPERTY);
         if (Strings.isNullOrEmpty(encryptionKey)) {
             throw new RuntimeException("Failed to read key");
@@ -35,6 +34,11 @@ public final class KeyEnvVarUtils {
         KeyWithType encryptionKeyWithType = KeyWithType.fromString(encryptionKey);
 
         String decryptionKey = System.getenv(KEY_VALUE_PROPERTY + ".private");
+        return grabKeyWithCorrectSymmetry(encryptionKeyWithType, decryptionKey);
+    }
+
+    private static KeyPair grabKeyWithCorrectSymmetry(KeyWithType encryptionKeyWithType, String decryptionKey) {
+        KeyPair keyPair;
         if (Strings.isNullOrEmpty(decryptionKey)) {
             keyPair = KeyPair.symmetric(encryptionKeyWithType);
         } else {

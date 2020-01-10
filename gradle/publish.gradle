@@ -1,8 +1,18 @@
 apply from: "${rootDir}/gradle/publish-base.gradle"
 
 publishing {
+    repositories {
+        maven {
+            name = "ws-github"
+            url = uri("https://maven.pkg.github.com/WSStudios/service-packages")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GH_USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("GH_PASSWORD")
+            }
+        }
+    }
     publications {
-        nebula(MavenPublication) {
+        gpr(MavenPublication) {
             from components.java
         }
     }

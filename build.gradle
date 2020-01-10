@@ -20,6 +20,7 @@ plugins {
     id 'org.inferred.processors' version '2.2.0'
     id 'com.palantir.jacoco-full-report' version '0.3.0'
     id 'org.unbroken-dome.test-sets' version '1.5.2'
+    id 'maven-publish'
 }
 
 repositories {
