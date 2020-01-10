@@ -16,9 +16,12 @@
 
 package com.palantir.config.crypto;
 
+import com.google.common.base.Strings;
 import com.palantir.config.crypto.algorithm.Algorithm;
 import io.dropwizard.cli.Command;
 import io.dropwizard.setup.Bootstrap;
+
+import java.io.IOException;
 import java.nio.file.Paths;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
@@ -53,12 +56,22 @@ public final class EncryptConfigValueCommand extends Command {
         String keyfile = namespace.getString(KEYFILE);
         String value = namespace.getString(VALUE);
 
-        KeyWithType keyWithType = KeyFileUtils.keyWithTypeFromPath(Paths.get(keyfile));
+        KeyWithType keyWithType = getEncryptionKey(keyfile);
         Algorithm algorithm = keyWithType.getType().getAlgorithm();
-
         EncryptedValue encryptedValue = algorithm.newEncrypter().encrypt(keyWithType, value);
 
         // print the resulting encrypted value to the console
         System.out.println(encryptedValue);
+    }
+
+    private KeyWithType getEncryptionKey(String keyfile) throws IOException {
+        KeyWithType keyWithType;
+        if (Strings.isNullOrEmpty(System.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY))) {
+            keyWithType = KeyFileUtils.keyWithTypeFromPath(Paths.get(keyfile));
+        } else {
+            KeyPair keyPair = KeyEnvVarUtils.retrieveKeyPairFromEnvVar();
+            keyWithType = keyPair.encryptionKey();
+        }
+        return keyWithType;
     }
 }

@@ -22,11 +22,11 @@ public final class KeyEnvVarUtils {
     public static final String KEY_VALUE_PROPERTY = "palantir.config.key_value";
 
     public static String decryptUsingDefaultKeys(EncryptedValue encryptedValue) {
-        KeyPair keyPair = getKeyPair();
+        KeyPair keyPair = retrieveKeyPairFromEnvVar();
         return encryptedValue.decrypt(keyPair.decryptionKey());
     }
 
-    private static KeyPair getKeyPair() {
+    public static KeyPair retrieveKeyPairFromEnvVar() {
         KeyPair keyPair;
         String encryptionKey = System.getenv(KEY_VALUE_PROPERTY);
         if (Strings.isNullOrEmpty(encryptionKey)) {
