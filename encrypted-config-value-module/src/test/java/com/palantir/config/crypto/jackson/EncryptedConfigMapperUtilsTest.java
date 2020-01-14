@@ -22,19 +22,24 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.palantir.config.crypto.KeyEnvVarUtils;
 import com.palantir.config.crypto.KeyFileUtils;
+import com.palantir.config.crypto.util.SystemProxy;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import org.immutables.value.Value;
+import org.junit.Before;
 import org.junit.Test;
 
 public class EncryptedConfigMapperUtilsTest {
@@ -44,6 +49,13 @@ public class EncryptedConfigMapperUtilsTest {
 
     static {
         System.setProperty(KeyFileUtils.KEY_PATH_PROPERTY, "src/test/resources/test.key");
+    }
+
+    @Before
+    public void before() {
+        SystemProxy systemProxy = mock(SystemProxy.class);
+        when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("");
+        EncryptedConfigMapperUtils.setSystemProxy(systemProxy);
     }
 
     @Test

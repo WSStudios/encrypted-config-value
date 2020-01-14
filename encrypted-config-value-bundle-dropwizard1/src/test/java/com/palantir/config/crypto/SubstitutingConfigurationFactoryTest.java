@@ -18,9 +18,12 @@ package com.palantir.config.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.palantir.config.crypto.jackson.JsonNodeStringReplacer;
 import com.palantir.config.crypto.util.Person;
+import com.palantir.config.crypto.util.SystemProxy;
 import com.palantir.config.crypto.util.TestConfig;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.jackson.Jackson;
@@ -36,9 +39,12 @@ import org.junit.Test;
 public class SubstitutingConfigurationFactoryTest {
     private static String previousProperty;
     private static SubstitutingConfigurationFactory<TestConfig> factory;
+    private static SystemProxy systemProxy;
 
     @BeforeClass
-    public static void beforeClass() throws IOException {
+    public static void beforeClass() {
+        systemProxy = mock(SystemProxy.class);
+        when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("");
         previousProperty = System.getProperty(KeyFileUtils.KEY_PATH_PROPERTY);
         System.setProperty(KeyFileUtils.KEY_PATH_PROPERTY, "src/test/resources/test.key");
 
@@ -47,7 +53,7 @@ public class SubstitutingConfigurationFactoryTest {
                 Validators.newValidator(),
                 Jackson.newObjectMapper(),
                 "",
-                new JsonNodeStringReplacer(new DecryptingVariableSubstitutor()));
+                new JsonNodeStringReplacer(new DecryptingVariableSubstitutor(systemProxy)));
     }
 
     @AfterClass

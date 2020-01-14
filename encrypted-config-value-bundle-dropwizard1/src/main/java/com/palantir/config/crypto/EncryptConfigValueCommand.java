@@ -18,6 +18,7 @@ package com.palantir.config.crypto;
 
 import com.google.common.base.Strings;
 import com.palantir.config.crypto.algorithm.Algorithm;
+import com.palantir.config.crypto.util.SystemProxy;
 import io.dropwizard.cli.Command;
 import io.dropwizard.setup.Bootstrap;
 
@@ -30,13 +31,21 @@ public final class EncryptConfigValueCommand extends Command {
 
     public static final String KEYFILE = "keyfile";
     public static final String VALUE = "value";
+    private final SystemProxy systemProxy;
 
     public EncryptConfigValueCommand(String name) {
         super(name, "Encrypts a configuration value so it can be stored securely");
+        this.systemProxy = new SystemProxy();
+    }
+
+    protected EncryptConfigValueCommand(SystemProxy systemProxy) {
+        super("encrypt-config-value", "Encrypts a configuration value so it can be stored securely");
+        this.systemProxy = systemProxy;
     }
 
     protected EncryptConfigValueCommand() {
         super("encrypt-config-value", "Encrypts a configuration value so it can be stored securely");
+        this.systemProxy = new SystemProxy();
     }
 
     @Override
@@ -70,7 +79,7 @@ public final class EncryptConfigValueCommand extends Command {
 
     private KeyWithType getEncryptionKey(String keyfile) throws IOException {
         KeyWithType keyWithType;
-        if (Strings.isNullOrEmpty(System.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY))) {
+        if (Strings.isNullOrEmpty(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY))) {
             keyWithType = KeyFileUtils.keyWithTypeFromPath(Paths.get(keyfile));
         } else {
             KeyPair keyPair = KeyEnvVarUtils.retrieveKeyPairFromEnvVar();

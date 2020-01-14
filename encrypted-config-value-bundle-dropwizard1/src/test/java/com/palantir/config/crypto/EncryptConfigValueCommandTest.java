@@ -18,9 +18,12 @@ package com.palantir.config.crypto;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableMap;
 import com.palantir.config.crypto.algorithm.Algorithm;
+import com.palantir.config.crypto.util.SystemProxy;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
@@ -35,14 +38,17 @@ import org.junit.Test;
 public final class EncryptConfigValueCommandTest {
     private static final String CHARSET = "UTF8";
     private static final String plaintext = "this is a secret message";
-
+    private SystemProxy systemProxy;
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-    private final EncryptConfigValueCommand command = new EncryptConfigValueCommand();
+    private EncryptConfigValueCommand command;
 
     private PrintStream originalSystemOut;
 
     @Before
     public void setUpStreams() throws UnsupportedEncodingException {
+        systemProxy = mock(SystemProxy.class);
+        when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("");
+        command = new EncryptConfigValueCommand(systemProxy);
         originalSystemOut = System.out;
         System.setOut(new PrintStream(outContent, false, CHARSET));
     }

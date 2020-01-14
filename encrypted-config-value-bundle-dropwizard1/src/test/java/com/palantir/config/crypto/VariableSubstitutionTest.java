@@ -22,13 +22,17 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.palantir.config.crypto.util.SystemProxy;
 import com.palantir.config.crypto.util.TestConfig;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import java.io.IOException;
+
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -60,7 +64,9 @@ public final class VariableSubstitutionTest {
     public static final class TestApplication extends Application<TestConfig> {
         @Override
         public void initialize(Bootstrap<TestConfig> bootstrap) {
-            bootstrap.addBundle(new EncryptedConfigValueBundle());
+            SystemProxy systemProxy = mock(SystemProxy.class);
+            when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("");
+            bootstrap.addBundle(new EncryptedConfigValueBundle(systemProxy));
         }
 
         @Override

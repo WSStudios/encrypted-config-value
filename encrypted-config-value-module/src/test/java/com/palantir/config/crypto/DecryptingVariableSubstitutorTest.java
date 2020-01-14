@@ -19,13 +19,18 @@ package com.palantir.config.crypto;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.palantir.config.crypto.algorithm.Algorithm;
 import com.palantir.config.crypto.util.StringSubstitutionException;
+import com.palantir.config.crypto.util.SystemProxy;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -35,7 +40,8 @@ public class DecryptingVariableSubstitutorTest {
     private static final KeyPair KEY_PAIR = ALGORITHM.newKeyPair();
     private static String previousProperty;
 
-    private final DecryptingVariableSubstitutor substitutor = new DecryptingVariableSubstitutor();
+    private SystemProxy systemProxy;
+    private DecryptingVariableSubstitutor substitutor;
 
     @BeforeClass
     public static void beforeClass() throws IOException {
@@ -44,6 +50,13 @@ public class DecryptingVariableSubstitutorTest {
         Path tempFilePath = Files.createTempDirectory("temp-key-directory").resolve("test.key");
         KeyFileUtils.keyPairToFile(KEY_PAIR, tempFilePath);
         System.setProperty(KeyFileUtils.KEY_PATH_PROPERTY, tempFilePath.toAbsolutePath().toString());
+    }
+
+    @Before
+    public void before() {
+        systemProxy = mock(SystemProxy.class);
+        when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("");
+        substitutor = new DecryptingVariableSubstitutor(systemProxy);
     }
 
     @AfterClass

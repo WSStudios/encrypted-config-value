@@ -18,79 +18,38 @@ package com.palantir.config.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Maps;
 import com.palantir.config.crypto.jackson.JsonNodeStringReplacer;
 import com.palantir.config.crypto.util.Person;
+import com.palantir.config.crypto.util.SystemProxy;
 import com.palantir.config.crypto.util.TestConfig;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.jersey.validation.Validators;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.Map;
 import java.util.regex.Matcher;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class EnvVarSubstitutingConfigurationFactoryTest {
     private static SubstitutingConfigurationFactory<TestConfig> factory;
-    private static Map<String, String> previousEnv;
-
-    // https://stackoverflow.com/questions/318239/how-do-i-set-environment-variables-from-java
-    @SuppressWarnings("unchecked")
-    protected static void updateEnv(Map<String, String> newenv) throws Exception {
-        try {
-            Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
-            Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
-            theEnvironmentField.setAccessible(true);
-            Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
-            env.putAll(newenv);
-            Field theCaseInsensitiveEnvironmentField = processEnvironmentClass
-                    .getDeclaredField("theCaseInsensitiveEnvironment");
-            theCaseInsensitiveEnvironmentField.setAccessible(true);
-            Map<String, String> cienv = (Map<String, String>)     theCaseInsensitiveEnvironmentField.get(null);
-            cienv.putAll(newenv);
-        } catch (NoSuchFieldException e) {
-            Class[] classes = Collections.class.getDeclaredClasses();
-            Map<String, String> env = System.getenv();
-            for (Class cl : classes) {
-                if ("java.util.Collections$UnmodifiableMap".equals(cl.getName())) {
-                    Field field = cl.getDeclaredField("m");
-                    field.setAccessible(true);
-                    Object obj = field.get(env);
-                    Map<String, String> map = (Map<String, String>) obj;
-                    map.clear();
-                    map.putAll(newenv);
-                }
-            }
-        }
-    }
+    private static SystemProxy systemProxy;
 
     @BeforeClass
-    public static void before() throws Exception {
-        previousEnv = System.getenv();
-        Map<String, String> env = Maps.newHashMap(previousEnv);
-        env.put(KeyEnvVarUtils.KEY_VALUE_PROPERTY, "AES:vgwWG0UUo39Hhfru2dD7Nw==");
-        EnvVarSubstitutingConfigurationFactoryTest.updateEnv(env);
-
+    public static void before() {
+        systemProxy = mock(SystemProxy.class);
+        when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("AES:vgwWG0UUo39Hhfru2dD7Nw==");
+        KeyEnvVarUtils.setSystemProxy(systemProxy);
         factory = new SubstitutingConfigurationFactory(
                 TestConfig.class,
                 Validators.newValidator(),
                 Jackson.newObjectMapper(),
                 "",
-                new JsonNodeStringReplacer(new DecryptingVariableSubstitutor()));
-    }
-
-    @AfterClass
-    public static void after() throws Exception {
-        if (previousEnv != null) {
-            EnvVarSubstitutingConfigurationFactoryTest.updateEnv(previousEnv);
-        }
+                new JsonNodeStringReplacer(new DecryptingVariableSubstitutor(systemProxy)));
     }
 
     @Test

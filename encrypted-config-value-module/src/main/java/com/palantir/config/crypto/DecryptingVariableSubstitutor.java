@@ -18,16 +18,26 @@ package com.palantir.config.crypto;
 
 import com.google.common.base.Strings;
 import com.palantir.config.crypto.util.StringSubstitutionException;
+import com.palantir.config.crypto.util.SystemProxy;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 
 public final class DecryptingVariableSubstitutor extends StrSubstitutor {
-
     public DecryptingVariableSubstitutor() {
-        super(new DecryptingStringLookup());
+        super(new DecryptingStringLookup(new SystemProxy()));
+    }
+
+    public DecryptingVariableSubstitutor(SystemProxy systemProxy) {
+        super(new DecryptingStringLookup(systemProxy));
     }
 
     private static final class DecryptingStringLookup extends StrLookup<String> {
+        private final SystemProxy systemProxy;
+
+        DecryptingStringLookup(SystemProxy systemProxy) {
+            this.systemProxy = systemProxy;
+        }
+
         @Override
         public String lookup(String encryptedValue) {
             if (!EncryptedValue.isEncryptedValue(encryptedValue)) {
@@ -35,7 +45,7 @@ public final class DecryptingVariableSubstitutor extends StrSubstitutor {
             }
 
             try {
-                if (Strings.isNullOrEmpty(System.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY))) {
+                if (Strings.isNullOrEmpty(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY))) {
                     return KeyFileUtils.decryptUsingDefaultKeys(EncryptedValue.fromString(encryptedValue));
                 } else {
                     return KeyEnvVarUtils.decryptUsingDefaultKeys(EncryptedValue.fromString(encryptedValue));

@@ -19,12 +19,22 @@ package com.palantir.config.crypto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.palantir.config.crypto.jackson.JsonNodeStringReplacer;
 import com.palantir.config.crypto.jackson.JsonNodeVisitor;
+import com.palantir.config.crypto.util.SystemProxy;
 import io.dropwizard.Bundle;
 import io.dropwizard.Configuration;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
 public final class EncryptedConfigValueBundle implements Bundle {
+    private final SystemProxy systemProxy;
+
+    public EncryptedConfigValueBundle() {
+        systemProxy = new SystemProxy();
+    }
+
+    public EncryptedConfigValueBundle(SystemProxy systemProxy) {
+        this.systemProxy = systemProxy;
+    }
 
     // Generically capture configuration type T from Bootstrap<T>, though we don't actually care about it
     private static <T extends Configuration> void setConfigurationFactoryFactory(
@@ -36,9 +46,10 @@ public final class EncryptedConfigValueBundle implements Bundle {
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
         bootstrap.addCommand(new GenerateKeyCommand());
-        bootstrap.addCommand(new EncryptConfigValueCommand());
+        bootstrap.addCommand(new EncryptConfigValueCommand(systemProxy));
         bootstrap.addCommand(new EncryptConfigValueCommand("encrypt"));
-        setConfigurationFactoryFactory(bootstrap, new JsonNodeStringReplacer(new DecryptingVariableSubstitutor()));
+        setConfigurationFactoryFactory(bootstrap,
+                                       new JsonNodeStringReplacer(new DecryptingVariableSubstitutor(systemProxy)));
     }
 
     @Override

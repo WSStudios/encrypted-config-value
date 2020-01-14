@@ -17,9 +17,15 @@
 package com.palantir.config.crypto;
 
 import com.google.common.base.Strings;
+import com.palantir.config.crypto.util.SystemProxy;
 
 public final class KeyEnvVarUtils {
     public static final String KEY_VALUE_PROPERTY = "palantir.config.key_value";
+    private static SystemProxy systemProxy = new SystemProxy();
+
+    public static void setSystemProxy(SystemProxy systemProxy) {
+        KeyEnvVarUtils.systemProxy = systemProxy;
+    }
 
     public static String decryptUsingDefaultKeys(EncryptedValue encryptedValue) {
         KeyPair keyPair = retrieveKeyPairFromEnvVar();
@@ -27,13 +33,13 @@ public final class KeyEnvVarUtils {
     }
 
     public static KeyPair retrieveKeyPairFromEnvVar() {
-        String encryptionKey = System.getenv(KEY_VALUE_PROPERTY);
+        String encryptionKey = systemProxy.getenv(KEY_VALUE_PROPERTY);
         if (Strings.isNullOrEmpty(encryptionKey)) {
             throw new RuntimeException("Failed to read key");
         }
         KeyWithType encryptionKeyWithType = KeyWithType.fromString(encryptionKey);
 
-        String decryptionKey = System.getenv(KEY_VALUE_PROPERTY + ".private");
+        String decryptionKey = systemProxy.getenv(KEY_VALUE_PROPERTY + ".private");
         return grabKeyWithCorrectSymmetry(encryptionKeyWithType, decryptionKey);
     }
 

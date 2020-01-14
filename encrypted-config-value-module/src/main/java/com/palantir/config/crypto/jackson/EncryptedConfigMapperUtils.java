@@ -21,26 +21,35 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.palantir.config.crypto.DecryptingVariableSubstitutor;
+import com.palantir.config.crypto.util.SystemProxy;
+
 import java.io.File;
 import java.io.IOException;
 
 public final class EncryptedConfigMapperUtils {
-    private static final JsonNodeStringReplacer JSON_NODE_STRING_REPLACER =
-            new JsonNodeStringReplacer(new DecryptingVariableSubstitutor());
+    private static SystemProxy systemProxy = new SystemProxy();
+    private static JsonNodeStringReplacer jsonNodeStringReplacer =
+            new JsonNodeStringReplacer(new DecryptingVariableSubstitutor(systemProxy));
+
+    public static void setSystemProxy(SystemProxy systemProxy) {
+        EncryptedConfigMapperUtils.systemProxy = systemProxy;
+        jsonNodeStringReplacer =
+                new JsonNodeStringReplacer(new DecryptingVariableSubstitutor(systemProxy));
+    }
 
     private EncryptedConfigMapperUtils() {}
 
     public static <T> T getConfig(File configFile, Class<T> clazz, ObjectMapper mapper)
             throws JsonParseException, JsonMappingException, IOException {
         JsonNode configNode = mapper.readValue(configFile, JsonNode.class);
-        JsonNode substitutedNode = JsonNodeVisitors.dispatch(configNode, JSON_NODE_STRING_REPLACER);
+        JsonNode substitutedNode = JsonNodeVisitors.dispatch(configNode, jsonNodeStringReplacer);
         return mapper.treeToValue(substitutedNode, clazz);
     }
 
     public static <T> T getConfig(String configFileContent, Class<T> clazz, ObjectMapper mapper)
             throws JsonParseException, JsonMappingException, IOException {
         JsonNode configNode = mapper.readTree(configFileContent);
-        JsonNode substitutedNode = JsonNodeVisitors.dispatch(configNode, JSON_NODE_STRING_REPLACER);
+        JsonNode substitutedNode = JsonNodeVisitors.dispatch(configNode, jsonNodeStringReplacer);
         return mapper.treeToValue(substitutedNode, clazz);
     }
 }
