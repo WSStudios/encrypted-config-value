@@ -13,10 +13,10 @@ bintray {
         name = 'encrypted-config-value'
         userOrg = 'palantir'
         licenses = ['Apache-2.0']
-        publications = ['nebula']
+        publications = ['gpr']
     }
 }
 
-bintrayUpload.dependsOn { generatePomFileForNebulaPublication }
+bintrayUpload.dependsOn { generatePomFileForGprPublication }
 bintrayUpload.dependsOn { sourceJar }
 bintrayUpload.dependsOn { build }
