@@ -42,7 +42,7 @@ public class EnvVarSubstitutingConfigurationFactoryTest {
     @BeforeClass
     public static void before() {
         systemProxy = mock(SystemProxy.class);
-        when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("AES:vgwWG0UUo39Hhfru2dD7Nw==");
+        when(systemProxy.getenv(KeyEnvVarUtils.ENCRYPTION_KEY_NAME)).thenReturn("AES:vgwWG0UUo39Hhfru2dD7Nw==");
         KeyEnvVarUtils.setSystemProxy(systemProxy);
         factory = new SubstitutingConfigurationFactory(
                 TestConfig.class,

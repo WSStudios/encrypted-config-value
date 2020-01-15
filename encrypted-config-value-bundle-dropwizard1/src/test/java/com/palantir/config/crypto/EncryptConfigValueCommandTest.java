@@ -47,7 +47,6 @@ public final class EncryptConfigValueCommandTest {
     @Before
     public void setUpStreams() throws UnsupportedEncodingException {
         systemProxy = mock(SystemProxy.class);
-        when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("");
         command = new EncryptConfigValueCommand(systemProxy);
         originalSystemOut = System.out;
         System.setOut(new PrintStream(outContent, false, CHARSET));
@@ -59,6 +58,7 @@ public final class EncryptConfigValueCommandTest {
     }
 
     private void weEncryptAndPrintAValue(Algorithm algorithm) throws Exception {
+        when(systemProxy.getenv(KeyEnvVarUtils.ENCRYPTION_KEY_NAME)).thenReturn("");
         Path tempFilePath = Files.createTempDirectory("temp-key-directory").resolve("test.key");
 
         KeyPair keyPair = algorithm.newKeyPair();
@@ -70,6 +70,29 @@ public final class EncryptConfigValueCommandTest {
 
         command.run(null, namespace);
 
+        assertOutputEqualsDecryptedValue(keyPair);
+    }
+
+    private void weEncryptAndPrintAValueUsingEnvVar(Algorithm algorithm) throws Exception {
+        KeyPair keyPair = algorithm.newKeyPair();
+
+        when(systemProxy.getenv(KeyEnvVarUtils.ENCRYPTION_KEY_NAME))
+                .thenReturn(keyPair.encryptionKey().toString());
+        KeyEnvVarUtils.setSystemProxy(systemProxy);
+        if (keyPair.encryptionKey() != keyPair.decryptionKey()) {
+            when(systemProxy.getenv(KeyEnvVarUtils.DECRYPTION_KEY_NAME))
+                    .thenReturn(keyPair.decryptionKey().toString());
+        }
+
+        Namespace namespace = new Namespace(ImmutableMap.of(
+                EncryptConfigValueCommand.VALUE, plaintext));
+
+        command.run(null, namespace);
+
+        assertOutputEqualsDecryptedValue(keyPair);
+    }
+
+    private void assertOutputEqualsDecryptedValue(KeyPair keyPair) throws UnsupportedEncodingException {
         String output = outContent.toString(CHARSET).trim();
 
         EncryptedValue configValue = EncryptedValue.fromString(output);
@@ -95,6 +118,26 @@ public final class EncryptConfigValueCommandTest {
 
         Namespace namespace = new Namespace(ImmutableMap.of(
                 EncryptConfigValueCommand.KEYFILE, tempFilePath.toString(),
+                EncryptConfigValueCommand.VALUE, plaintext));
+
+        command.run(null, namespace);
+    }
+
+    @Test
+    public void weEncryptAndPrintAValueUsingAesFromEnvVar() throws Exception {
+        weEncryptAndPrintAValueUsingEnvVar(Algorithm.AES);
+    }
+
+    @Test
+    public void weEncryptAndPrintAValueUsingRsaFromEnvVar() throws Exception {
+        weEncryptAndPrintAValueUsingEnvVar(Algorithm.RSA);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void weFailIfNeitherVariableNorKeyfileExists() throws Exception {
+        when(systemProxy.getenv(KeyEnvVarUtils.ENCRYPTION_KEY_NAME)).thenReturn(null);
+
+        Namespace namespace = new Namespace(ImmutableMap.of(
                 EncryptConfigValueCommand.VALUE, plaintext));
 
         command.run(null, namespace);

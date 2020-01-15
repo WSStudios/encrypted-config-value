@@ -54,7 +54,7 @@ public class EncryptedConfigMapperUtilsTest {
     @Before
     public void before() {
         SystemProxy systemProxy = mock(SystemProxy.class);
-        when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("");
+        when(systemProxy.getenv(KeyEnvVarUtils.ENCRYPTION_KEY_NAME)).thenReturn("");
         EncryptedConfigMapperUtils.setSystemProxy(systemProxy);
     }
 

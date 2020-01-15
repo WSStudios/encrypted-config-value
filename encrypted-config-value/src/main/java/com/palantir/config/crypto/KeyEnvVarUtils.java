@@ -20,26 +20,27 @@ import com.google.common.base.Strings;
 import com.palantir.config.crypto.util.SystemProxy;
 
 public final class KeyEnvVarUtils {
-    public static final String KEY_VALUE_PROPERTY = "palantir.config.key_value";
+    public static final String ENCRYPTION_KEY_NAME = "config.encryption.key";
+    public static final String DECRYPTION_KEY_NAME = "config.decryption.key";
     private static SystemProxy systemProxy = new SystemProxy();
 
     public static void setSystemProxy(SystemProxy systemProxy) {
         KeyEnvVarUtils.systemProxy = systemProxy;
     }
 
-    public static String decryptUsingDefaultKeys(EncryptedValue encryptedValue) {
+    public static String decryptUsingEnvironmentKeys(EncryptedValue encryptedValue) {
         KeyPair keyPair = retrieveKeyPairFromEnvVar();
         return encryptedValue.decrypt(keyPair.decryptionKey());
     }
 
     public static KeyPair retrieveKeyPairFromEnvVar() {
-        String encryptionKey = systemProxy.getenv(KEY_VALUE_PROPERTY);
+        String encryptionKey = systemProxy.getenv(ENCRYPTION_KEY_NAME);
         if (Strings.isNullOrEmpty(encryptionKey)) {
             throw new RuntimeException("Failed to read key");
         }
         KeyWithType encryptionKeyWithType = KeyWithType.fromString(encryptionKey);
 
-        String decryptionKey = systemProxy.getenv(KEY_VALUE_PROPERTY + ".private");
+        String decryptionKey = systemProxy.getenv(DECRYPTION_KEY_NAME);
         return grabKeyWithCorrectSymmetry(encryptionKeyWithType, decryptionKey);
     }
 

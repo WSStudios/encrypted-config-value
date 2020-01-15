@@ -65,7 +65,7 @@ public final class VariableSubstitutionTest {
         @Override
         public void initialize(Bootstrap<TestConfig> bootstrap) {
             SystemProxy systemProxy = mock(SystemProxy.class);
-            when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("");
+            when(systemProxy.getenv(KeyEnvVarUtils.ENCRYPTION_KEY_NAME)).thenReturn("");
             bootstrap.addBundle(new EncryptedConfigValueBundle(systemProxy));
         }
 

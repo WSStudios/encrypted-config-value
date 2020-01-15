@@ -78,13 +78,11 @@ public final class EncryptConfigValueCommand extends Command {
     }
 
     private KeyWithType getEncryptionKey(String keyfile) throws IOException {
-        KeyWithType keyWithType;
-        if (Strings.isNullOrEmpty(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY))) {
-            keyWithType = KeyFileUtils.keyWithTypeFromPath(Paths.get(keyfile));
+        if (Strings.isNullOrEmpty(systemProxy.getenv(KeyEnvVarUtils.ENCRYPTION_KEY_NAME))) {
+            return KeyFileUtils.keyWithTypeFromPath(Paths.get(keyfile));
         } else {
             KeyPair keyPair = KeyEnvVarUtils.retrieveKeyPairFromEnvVar();
-            keyWithType = keyPair.encryptionKey();
+            return keyPair.encryptionKey();
         }
-        return keyWithType;
     }
 }

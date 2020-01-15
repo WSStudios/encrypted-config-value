@@ -44,7 +44,7 @@ public class SubstitutingConfigurationFactoryTest {
     @BeforeClass
     public static void beforeClass() {
         systemProxy = mock(SystemProxy.class);
-        when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("");
+        when(systemProxy.getenv(KeyEnvVarUtils.ENCRYPTION_KEY_NAME)).thenReturn("");
         previousProperty = System.getProperty(KeyFileUtils.KEY_PATH_PROPERTY);
         System.setProperty(KeyFileUtils.KEY_PATH_PROPERTY, "src/test/resources/test.key");
 

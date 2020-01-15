@@ -55,7 +55,7 @@ public class DecryptingVariableSubstitutorTest {
     @Before
     public void before() {
         systemProxy = mock(SystemProxy.class);
-        when(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY)).thenReturn("");
+        when(systemProxy.getenv(KeyEnvVarUtils.ENCRYPTION_KEY_NAME)).thenReturn("");
         substitutor = new DecryptingVariableSubstitutor(systemProxy);
     }
 
@@ -85,6 +85,19 @@ public class DecryptingVariableSubstitutorTest {
     @Test
     public final void nonEncryptedVariablesAreNotModified() {
         assertThat(substitutor.replace("${abc}"), is("${abc}"));
+    }
+
+    @Test
+    public final void variableIsDecryptedWithEnvVar() throws Exception {
+        systemProxy = mock(SystemProxy.class);
+        String decryptionKey = KEY_PAIR.decryptionKey().toString();
+        String encryptionKey = KEY_PAIR.encryptionKey().toString();
+        when(systemProxy.getenv(KeyEnvVarUtils.ENCRYPTION_KEY_NAME)).thenReturn(encryptionKey);
+        when(systemProxy.getenv(KeyEnvVarUtils.DECRYPTION_KEY_NAME)).thenReturn(decryptionKey);
+        substitutor = new DecryptingVariableSubstitutor(systemProxy);
+        KeyEnvVarUtils.setSystemProxy(systemProxy);
+
+        assertThat(substitutor.replace("${" + encrypt("abc") + "}"), is("abc"));
     }
 
     @Test

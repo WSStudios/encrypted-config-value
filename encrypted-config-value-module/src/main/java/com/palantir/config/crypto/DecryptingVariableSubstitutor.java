@@ -45,10 +45,10 @@ public final class DecryptingVariableSubstitutor extends StrSubstitutor {
             }
 
             try {
-                if (Strings.isNullOrEmpty(systemProxy.getenv(KeyEnvVarUtils.KEY_VALUE_PROPERTY))) {
+                if (Strings.isNullOrEmpty(systemProxy.getenv(KeyEnvVarUtils.ENCRYPTION_KEY_NAME))) {
                     return KeyFileUtils.decryptUsingDefaultKeys(EncryptedValue.fromString(encryptedValue));
                 } else {
-                    return KeyEnvVarUtils.decryptUsingDefaultKeys(EncryptedValue.fromString(encryptedValue));
+                    return KeyEnvVarUtils.decryptUsingEnvironmentKeys(EncryptedValue.fromString(encryptedValue));
                 }
             } catch (RuntimeException e) {
                 throw new StringSubstitutionException(e, encryptedValue);
