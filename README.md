@@ -19,7 +19,7 @@ RSA-PRIV:DvIEgvIBDA...
 2. Generate a new encrypted value
 
 ```console
-my-application$ ./bin/my-dropwizard-app encrypt -v topSecretPassword
+my-application$ ./target/game-agent-shaded.jar encrypt -v topSecretPassword
 enc:V92jePHsFbT0PxdJoer+oA== 
 ```
 
@@ -34,7 +34,7 @@ auth:
 4. Start your application (with the `config.decryption.key` environment variable set)
 
 ```console
-my-application$ ./bin/my-dropwizard-app start config.yml
+my-application$ ./target/game-agent-shaded.jar start config.yml
 ```
 
 
