@@ -1,3 +1,91 @@
+Example Usage (Wonderstorm Additions)
+====================================
+
+Original functionality maintained with the addition of support for retrieving encryption/decryption keys directly from specific environment variables.
+
+Also added the following alias 
+- `encrypt -v <value> [-k <keyfile>]` for encrypting values.  Alias of `encrypt-config-value`
+
+1. Ensure you have an encryption & decryption key in the specified environment variables.  This could already be set up in your $PROFILE, you can check with:
+
+```powershell
+C:\ws\game-agent> echo ${env:config.encryption.key}
+RSA-PUB:ZIBIIjANBgkq...
+
+C:\ws\game-agent> echo ${env:config.decryption.key}
+RSA-PRIV:DvIEgvIBDA...
+```
+
+2. Generate a new encrypted value
+
+```console
+my-application$ ./bin/my-dropwizard-app encrypt -v topSecretPassword
+enc:V92jePHsFbT0PxdJoer+oA== 
+```
+
+3. Paste it into your config
+
+```yaml
+auth:
+   username: my-user
+   password: ${enc:V92jePHsFbT0PxdJoer+oA==}
+```
+
+4. Start your application (with the `config.decryption.key` environment variable set)
+
+```console
+my-application$ ./bin/my-dropwizard-app start config.yml
+```
+
+
+Making Changes (w/ Wonderstorm Additions)
+==========================================
+
+1. Ensure Java 8 is set in your path (for "java -jar...") and as your JAVA_HOME (for "mvn...").  This needs to happen before launching a shell/IDE, etc.  The two version commands should return something like before in order for it to work.
+
+```powershell
+C:\ws\encrypted-config-value [develop]> java -version                                                                     openjdk version "1.8.0_232"
+OpenJDK Runtime Environment Corretto-8.232.09.1 (build 1.8.0_232-b09)
+OpenJDK 64-Bit Server VM Corretto-8.232.09.1 (build 25.232-b09, mixed mode)
+
+C:\ws\encrypted-config-value [develop]> mvn -version                                                                      Apache Maven 3.6.1 (d66c9c0b3152b2e69ee9bac180bb8fcc8e6af555; 2019-04-04T12:00:29-07:00)
+Maven home: C:\Program Files\JetBrains\IntelliJ IDEA 2019.2.4\plugins\maven\lib\maven3\bin\..
+Java version: 1.8.0_232, vendor: Amazon.com Inc., runtime: C:\Program Files\Amazon Corretto\jdk1.8.0_232\jre
+Default locale: en_US, platform encoding: Cp1252
+OS name: "windows 10", version: "10.0", arch: "amd64", family: "windows"
+```
+
+2. Ensure the project is set up to use Gradle as the build system in your IDE & CLI.  For CLI, you can test by building:
+
+```console
+.\gradlew.bat clean build
+```
+
+3. Make code changes
+
+4. build
+
+```console
+.\gradlew.bat clean build
+```
+
+6. Tag in git (package versions are driven from git tags)
+
+```console
+git tag -a 2.2.3-wonderstorm -m "I have fixed bugs"
+```
+
+5. Push to package repo
+
+```console
+.\gradlew.bat publishGprPublicationToWs-githubRepository
+```
+
+Original Repo below this line.
+==============================
+
+<hr>
+
 <p align="right">
 <a href="https://autorelease.general.dmz.palantir.tech/palantir/encrypted-config-value"><img src="https://img.shields.io/badge/Perform%20an-Autorelease-success.svg" alt="Autorelease"></a>
 </p>
